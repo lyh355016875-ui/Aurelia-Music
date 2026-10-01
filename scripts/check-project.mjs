@@ -52,6 +52,10 @@ assert.ok(app.includes('displayTransitionNodes') && app.includes('is-track-trans
 assert.ok(scene.includes('labelTargetOpacity') && scene.includes('camera.position.y'), 'The 3D center label should fade and pointer parallax should tilt smoothly');
 assert.ok(css.includes('.is-track-transitioning') && css.includes('background-color .55s ease'), 'V0.7 should include cover transitions and subtle background-tone animation');
 assert.ok(css.includes(':active') && html.includes('role="button" tabindex="0"'), 'Controls should expose press state and keyboard interaction');
+assert.ok(html.includes('id="mini-player-return"') && html.includes('id="favorite-track"'), 'The mini player should expose return and favorite controls');
+assert.ok(app.includes('localStorage.setItem(favoritesStorageKey') && app.includes('aria-pressed'), 'Favorites should persist and expose their state accessibly');
+assert.ok(app.includes('miniPlayerReturn') && app.includes("scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth'"), 'The mini player should return focus to the central player');
+assert.ok(app.includes('favoriteIds.has(track.id)') && app.includes('updateFavoriteButton'), 'Favorite state should follow the active track');
 assert.ok(scene.includes('RoundedBoxGeometry') && scene.includes('CylinderGeometry'), '3D scene should include the turntable plinth and disc');
 assert.ok(scene.includes('aurelia:play-state'), '3D rotation should expose a playback-state hook');
 assert.ok(packageJson.dependencies.three, 'Three.js should be a local project dependency');
@@ -61,4 +65,4 @@ assert.ok(css.includes('@media (max-width: 760px)'), 'Tablet/mobile layout break
 assert.ok(css.includes('@media (max-width: 400px)'), 'Small-phone layout breakpoint should exist');
 assert.ok(css.includes('prefers-reduced-motion: reduce'), 'Reduced-motion preference should be respected');
 assert.ok(!html.includes('http://') && !html.includes('https://'), 'Page should not load remote runtime assets');
-console.log('V0.1–V0.7 foundation, UI, 3D, audio, artwork, analyser, and interaction checks passed.');
+console.log('V0.1–V0.8 foundation, UI, 3D, audio, artwork, analyser, interaction, and Mini Player checks passed.');

@@ -346,3 +346,32 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--gold-soft); out
 @media (prefers-reduced-motion: reduce) {
   .is-track-transitioning, .nav-item, .queue-tab, .track-row, .icon-button, .control-button, .play-button, .volume-button { transition: none !important; }
 }
+
+/* V0.8 — compact mini player with persistent favorites */
+.bottom-track { gap: 5px; }
+.mini-player-return { min-width: 0; flex: 1 1 auto; padding: 0; display: flex; align-items: center; gap: 10px; overflow: hidden; border: 0; border-radius: 5px; background: transparent; color: inherit; text-align: left; cursor: pointer; }
+.bottom-track-copy { min-width: 0; flex: 1 1 auto; display: block; }
+.favorite-button { width: 24px; height: 28px; flex: 0 0 24px; padding: 0; display: grid; place-items: center; border: 0; border-radius: 6px; background: transparent; color: #8c8678; cursor: pointer; }
+.favorite-button svg { width: 16px; height: 16px; overflow: visible; }
+.favorite-button svg path { fill: transparent; stroke: currentColor; stroke-width: 1.45; stroke-linecap: round; stroke-linejoin: round; transition: fill .2s ease, transform .22s ease, stroke .2s ease; transform-origin: center; }
+.favorite-button:hover { color: var(--gold-soft); }
+.favorite-button:active svg path { transform: scale(.84); }
+.favorite-button.is-favorited { color: var(--gold-soft); }
+.favorite-button.is-favorited svg path { fill: currentColor; animation: favorite-pop .24s ease-out; }
+@keyframes favorite-pop { 0% { transform: scale(.72); } 70% { transform: scale(1.14); } 100% { transform: scale(1); } }
+.mini-player-return:hover .bottom-track-title { color: var(--gold-soft); }
+.mini-player-return:active { transform: scale(.985); }
+@media (max-width: 760px) {
+  .mini-player-return { gap: 7px; }
+  .favorite-button { width: 21px; flex-basis: 21px; }
+}
+@media (max-width: 400px) {
+  .bottom-track { gap: 3px; }
+  .mini-player-return { gap: 5px; }
+  .mini-art { width: 31px; height: 31px; flex-basis: 31px; }
+  .mini-art::before { width: 27px; height: 27px; top: 3px; left: 10px; }
+  .mini-art span { top: 10px; left: 5px; width: 10px; height: 10px; }
+  .favorite-button { width: 19px; flex-basis: 19px; }
+  .favorite-button svg { width: 14px; height: 14px; }
+}
+@media (prefers-reduced-motion: reduce) { .favorite-button svg path { animation: none !important; transition: none !important; } }

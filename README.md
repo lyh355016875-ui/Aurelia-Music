@@ -4,6 +4,12 @@ Aurelia is a quiet, artful listening space inspired by premium audio equipment, 
 
 ## Releases
 
+### V0.8 — Mini player and details
+
+- The docked mini player shows the current cover, track, artist, play state, and a favorite heart.
+- Favorite/unfavorite state persists in local storage per track.
+- Clicking the mini-player identity scrolls and focuses the central Now Playing panel; volume, mute, and restore controls remain available.
+
 ### V0.7 — Tactile interactions
 
 - Hover over the 3D scene for restrained parallax; click/tap the record or focus it and press Enter/Space to play or pause.

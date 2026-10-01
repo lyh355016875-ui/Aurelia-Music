@@ -26,6 +26,16 @@ const totalTimeLabel = document.querySelector('#total-time');
 const volumeSlider = document.querySelector('#volume-control');
 const volumeButton = document.querySelector('#volume-button');
 const audioStatus = document.querySelector('#audio-status');
+const favoriteButton = document.querySelector('#favorite-track');
+const miniPlayerReturn = document.querySelector('#mini-player-return');
+const favoritesStorageKey = 'aurelia:favorite-tracks';
+let favoriteIds = new Set();
+try {
+  const storedFavorites = JSON.parse(window.localStorage.getItem(favoritesStorageKey) || '[]');
+  if (Array.isArray(storedFavorites)) favoriteIds = new Set(storedFavorites.filter((id) => tracks.some((track) => track.id === id)));
+} catch {
+  favoriteIds = new Set();
+}
 const displayTransitionNodes = [
   document.querySelector('.bottom-track-title'),
   document.querySelector('.bottom-track-artist'),
@@ -91,6 +101,27 @@ function formatTime(seconds) {
   return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
 }
 
+function updateFavoriteButton() {
+  const track = tracks[currentIndex];
+  const isFavorite = favoriteIds.has(track.id);
+  favoriteButton.setAttribute('aria-pressed', String(isFavorite));
+  favoriteButton.setAttribute('aria-label', isFavorite ? '取消收藏' : '收藏这首歌');
+  favoriteButton.title = isFavorite ? '取消收藏' : '收藏这首歌';
+  favoriteButton.classList.toggle('is-favorited', isFavorite);
+}
+
+function toggleFavorite() {
+  const track = tracks[currentIndex];
+  if (favoriteIds.has(track.id)) favoriteIds.delete(track.id);
+  else favoriteIds.add(track.id);
+  try {
+    window.localStorage.setItem(favoritesStorageKey, JSON.stringify([...favoriteIds]));
+  } catch {
+    audioStatus.textContent = '收藏状态暂时仅保存在当前页面。';
+  }
+  updateFavoriteButton();
+}
+
 function getVisibleTracks() {
   const query = search.value.trim().toLocaleLowerCase();
   const source = activeFilter === 'similar' ? recommendations : tracks;
@@ -130,6 +161,7 @@ function updateTrackDisplay(track) {
     document.querySelector('.bottom-track-artist').textContent = track.artist;
     document.querySelector('#stage-song-title').textContent = track.title;
     document.querySelector('#stage-song-artist').textContent = `${track.artist} · ${track.album}`;
+    miniPlayerReturn.setAttribute('aria-label', `打开正在播放：${track.title}`);
     document.querySelector('#current-track-status').textContent = `ORIGINAL DEMO · ${track.time}`;
     document.querySelector('.mini-art').style.setProperty('--cover-tone', track.tone);
     document.querySelector('.empty-art').style.setProperty('--cover-tone', track.tone);
@@ -137,6 +169,7 @@ function updateTrackDisplay(track) {
     document.querySelector('.empty-art').style.backgroundImage = `linear-gradient(145deg, rgba(15,13,10,.04), rgba(15,13,10,.2)), url("${track.cover}")`;
     document.documentElement.style.setProperty('--cover-tone', track.tone);
     window.aureliaVinylStage?.setCenterLabel(track.cover);
+    updateFavoriteButton();
     renderTracks();
     if (!reduceMotion) requestAnimationFrame(() => requestAnimationFrame(() => {
       if (transitionId === displayTransitionId) displayTransitionNodes.forEach((node) => node.classList.remove('is-track-transitioning'));
@@ -183,6 +216,7 @@ function switchTrack(nextIndex, autoplay = !audio.paused) {
   currentIndex = (nextIndex + tracks.length) % tracks.length;
   const track = tracks[currentIndex];
   selectedTrack = track.id;
+  updateFavoriteButton();
   audio.pause();
   audio.src = track.audio;
   audio.load();
@@ -217,6 +251,13 @@ const togglePlayback = () => {
 };
 playButton.addEventListener('click', togglePlayback);
 window.addEventListener('aurelia:vinyl-toggle', togglePlayback);
+favoriteButton.addEventListener('click', toggleFavorite);
+miniPlayerReturn.addEventListener('click', () => {
+  const playerPanel = document.querySelector('#now-playing-panel');
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  playerPanel.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+  playerPanel.focus({ preventScroll: true });
+});
 document.querySelector('#previous-track').addEventListener('click', () => switchTrack(currentIndex - 1));
 document.querySelector('#next-track').addEventListener('click', () => switchTrack(currentIndex + 1));
 audio.addEventListener('play', () => updatePlaybackState(true));
