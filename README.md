@@ -4,6 +4,12 @@ Aurelia is a quiet, artful listening space inspired by premium audio equipment, 
 
 ## Releases
 
+### V0.3 — 3D vinyl player
+
+- Real Three.js turntable scene with a grooved vinyl, center label, plinth, tonearm, cartridge, soft lighting, and shadows.
+- Gentle pointer parallax and a rotation state hook for later audio-playback synchronization.
+- Bundled local dependencies; no remote runtime assets.
+
 ### V0.2 — Premium listening-room interface
 
 - Three-column desktop layout with navigation, central listening stage, and a dedicated queue.
@@ -18,9 +24,10 @@ Established the page regions and responsive visual foundation without playback, 
 
 ## Run locally
 
-Requires Python 3 and Node.js; no npm packages are required for V0.2.
+Requires Node.js.
 
 ```bash
+npm install
 npm run dev
 ```
 

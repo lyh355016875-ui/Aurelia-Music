@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 
 const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 const css = readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
+const scene = readFileSync(new URL('../src/vinyl-stage.js', import.meta.url), 'utf8');
+const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 
 for (const landmark of ['<aside class="sidebar', '<main class="main-stage"', 'class="now-playing panel"', 'class="queue-panel panel"', 'class="bottom-player panel"']) {
   assert.ok(html.includes(landmark), `Missing V0.1 layout region: ${landmark}`);
@@ -19,9 +21,14 @@ for (const title of ['Better Days', 'Sunset Lover', '空山新雨后', '夜空�
 }
 assert.ok(html.includes('href="./styles.css"'), 'Stylesheet should be linked');
 assert.ok(html.includes('src="./app.js"'), 'App entry should be linked');
+assert.ok(html.includes('id="vinyl-canvas"'), '3D vinyl canvas should be present');
+assert.ok(scene.includes('RoundedBoxGeometry') && scene.includes('CylinderGeometry'), '3D scene should include the turntable plinth and disc');
+assert.ok(scene.includes('aurelia:play-state'), '3D rotation should expose a playback-state hook');
+assert.ok(packageJson.dependencies.three, 'Three.js should be a local project dependency');
+assert.ok(packageJson.scripts.build, 'A production build command should be available');
 assert.ok(existsSync(new URL('../app.js', import.meta.url)), 'App entry file should exist');
 assert.ok(css.includes('@media (max-width: 760px)'), 'Tablet/mobile layout breakpoint should exist');
 assert.ok(css.includes('@media (max-width: 400px)'), 'Small-phone layout breakpoint should exist');
 assert.ok(css.includes('prefers-reduced-motion: reduce'), 'Reduced-motion preference should be respected');
 assert.ok(!html.includes('http://') && !html.includes('https://'), 'Page should not load remote runtime assets');
-console.log('V0.1 foundation and V0.2 interface checks passed.');
+console.log('V0.1 foundation, V0.2 interface, and V0.3 scene checks passed.');

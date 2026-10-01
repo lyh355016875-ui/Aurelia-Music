@@ -1,3 +1,5 @@
+import { createVinylStage } from './src/vinyl-stage.js';
+
 const tracks = [
   { id: 'better-days', title: 'Better Days', artist: 'NEIKED · Mae Muller', album: 'Better Days', time: '3:18', tone: '#716044', group: 'playlist' },
   { id: 'sunset-lover', title: 'Sunset Lover', artist: 'Petit Biscuit', album: 'Presence', time: '3:57', tone: '#9b7650', group: 'playlist' },
@@ -69,4 +71,5 @@ document.querySelectorAll('.nav-item').forEach((item) => item.addEventListener('
 }));
 
 renderTracks();
+window.aureliaVinylStage = createVinylStage(document.querySelector('#vinyl-canvas'));
 document.documentElement.dataset.ready = 'true';
