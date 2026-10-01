@@ -62,6 +62,11 @@ assert.ok(scene.includes('api.getRenderState') && scene.includes('renderCount'),
 assert.ok(scene.includes('const geometries = new Set()') && scene.includes('const materials = new Set()') && scene.includes('const textures = new Set()'), 'Scene teardown should dispose unique GPU resources');
 assert.ok(scene.includes('geometry.dispose()') && scene.includes('texture.dispose()') && scene.includes('renderer.dispose()'), 'Three.js geometry, textures, and renderer should be released');
 assert.equal((app.match(/createMediaElementSource\(audio\)/g) || []).length, 1, 'The audio element should create only one MediaElementSource');
+assert.ok(html.includes('id="play-mode"') && html.includes('aria-label="播放模式：列表循环"'), 'The player should expose a clearly labelled playback-mode control');
+assert.ok(app.includes("playMode = ({ list: 'one', one: 'shuffle', shuffle: 'list' })[playMode]") && app.includes("audio.addEventListener('ended', advanceAfterEnd)"), 'Playback modes should cycle and control automatic track advance');
+assert.ok(app.includes('function randomNextTrackIndex()') && app.includes("playMode === 'one'"), 'Shuffle should avoid the current track and repeat-one should keep the current track');
+assert.ok(app.includes('localStorage.setItem(playModeStorageKey'), 'The selected playback mode should persist between visits');
+assert.ok(css.includes('.mode-one-badge') && css.includes('@media (max-width: 360px)'), 'Playback mode and controls should remain legible on small phones');
 assert.ok(scene.includes('RoundedBoxGeometry') && scene.includes('CylinderGeometry'), '3D scene should include the turntable plinth and disc');
 assert.ok(scene.includes('aurelia:play-state'), '3D rotation should expose a playback-state hook');
 assert.ok(packageJson.dependencies.three, 'Three.js should be a local project dependency');
@@ -69,6 +74,7 @@ assert.ok(packageJson.scripts.build, 'A production build command should be avail
 assert.ok(existsSync(new URL('../app.js', import.meta.url)), 'App entry file should exist');
 assert.ok(css.includes('@media (max-width: 760px)'), 'Tablet/mobile layout breakpoint should exist');
 assert.ok(css.includes('@media (max-width: 400px)'), 'Small-phone layout breakpoint should exist');
+assert.ok(css.includes('@media (max-width: 360px)'), 'Narrow-phone layout breakpoint should exist');
 assert.ok(css.includes('prefers-reduced-motion: reduce'), 'Reduced-motion preference should be respected');
 assert.ok(!html.includes('http://') && !html.includes('https://'), 'Page should not load remote runtime assets');
-console.log('V0.1–V0.9 foundation, UI, 3D, audio, artwork, analyser, interactions, Mini Player, and stability checks passed.');
+console.log('V0.1–V1.0 foundation, UI, 3D, audio modes, artwork, analyser, interactions, Mini Player, and stability checks passed.');

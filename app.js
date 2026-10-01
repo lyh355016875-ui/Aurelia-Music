@@ -28,6 +28,16 @@ const volumeButton = document.querySelector('#volume-button');
 const audioStatus = document.querySelector('#audio-status');
 const favoriteButton = document.querySelector('#favorite-track');
 const miniPlayerReturn = document.querySelector('#mini-player-return');
+const playModeButton = document.querySelector('#play-mode');
+const playModeStorageKey = 'aurelia:play-mode';
+const validPlayModes = new Set(['list', 'one', 'shuffle']);
+let playMode = 'list';
+try {
+  const storedPlayMode = window.localStorage.getItem(playModeStorageKey);
+  if (validPlayModes.has(storedPlayMode)) playMode = storedPlayMode;
+} catch {
+  playMode = 'list';
+}
 const favoritesStorageKey = 'aurelia:favorite-tracks';
 let favoriteIds = new Set();
 try {
@@ -45,7 +55,6 @@ const displayTransitionNodes = [
   document.querySelector('.empty-art')
 ];
 let activeFilter = 'playing';
-let selectedTrack = tracks[0].id;
 let currentIndex = 0;
 let lastVolume = Number(volumeSlider.value);
 let draggingSeek = false;
@@ -120,6 +129,26 @@ function toggleFavorite() {
     audioStatus.textContent = '收藏状态暂时仅保存在当前页面。';
   }
   updateFavoriteButton();
+}
+
+function updatePlayModeButton() {
+  const label = { list: '列表循环', one: '单曲循环', shuffle: '随机播放' }[playMode];
+  playModeButton.dataset.mode = playMode;
+  playModeButton.setAttribute('aria-label', `播放模式：${label}`);
+  playModeButton.setAttribute('aria-pressed', String(playMode !== 'list'));
+  playModeButton.title = label;
+  playModeButton.innerHTML = playMode === 'shuffle'
+    ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m16 3 4 4-4 4M4 7h2.5c4.2 0 5.8 10 10 10H20M16 13l4 4-4 4M4 17h2.5c1.8 0 3.2-2.2 4.4-4.2M14 9c1.1-1.2 2.2-2 3.5-2H20"/></svg>'
+    : `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h12a4 4 0 0 1 4 4v.5M16 4l3 3-3 3M20 17H8a4 4 0 0 1-4-4v-.5M8 20l-3-3 3-3"/></svg>${playMode === 'one' ? '<span class="mode-one-badge" aria-hidden="true">1</span>' : ''}`;
+}
+
+function randomNextTrackIndex() {
+  return tracks.length < 2 ? currentIndex : (currentIndex + 1 + Math.floor(Math.random() * (tracks.length - 1))) % tracks.length;
+}
+
+function advanceAfterEnd() {
+  if (playMode === 'one') switchTrack(currentIndex, true);
+  else switchTrack(playMode === 'shuffle' ? randomNextTrackIndex() : currentIndex + 1, true);
 }
 
 function getVisibleTracks() {
@@ -215,7 +244,6 @@ function seekAtPointer(event) {
 function switchTrack(nextIndex, autoplay = !audio.paused) {
   currentIndex = (nextIndex + tracks.length) % tracks.length;
   const track = tracks[currentIndex];
-  selectedTrack = track.id;
   updateFavoriteButton();
   audio.pause();
   audio.src = track.audio;
@@ -252,6 +280,12 @@ const togglePlayback = () => {
 playButton.addEventListener('click', togglePlayback);
 window.addEventListener('aurelia:vinyl-toggle', togglePlayback);
 favoriteButton.addEventListener('click', toggleFavorite);
+playModeButton.addEventListener('click', () => {
+  playMode = ({ list: 'one', one: 'shuffle', shuffle: 'list' })[playMode];
+  updatePlayModeButton();
+  try { window.localStorage.setItem(playModeStorageKey, playMode); } catch { /* Current-page mode still works. */ }
+  audioStatus.textContent = `播放模式：${{ list: '列表循环', one: '单曲循环', shuffle: '随机播放' }[playMode]}`;
+});
 miniPlayerReturn.addEventListener('click', () => {
   const playerPanel = document.querySelector('#now-playing-panel');
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -259,10 +293,10 @@ miniPlayerReturn.addEventListener('click', () => {
   playerPanel.focus({ preventScroll: true });
 });
 document.querySelector('#previous-track').addEventListener('click', () => switchTrack(currentIndex - 1));
-document.querySelector('#next-track').addEventListener('click', () => switchTrack(currentIndex + 1));
+document.querySelector('#next-track').addEventListener('click', () => switchTrack(playMode === 'shuffle' ? randomNextTrackIndex() : currentIndex + 1));
 audio.addEventListener('play', () => updatePlaybackState(true));
 audio.addEventListener('pause', () => updatePlaybackState(false));
-audio.addEventListener('ended', () => switchTrack(currentIndex + 1, true));
+audio.addEventListener('ended', advanceAfterEnd);
 audio.addEventListener('timeupdate', updateProgress);
 audio.addEventListener('loadedmetadata', updateProgress);
 audio.addEventListener('durationchange', updateProgress);
@@ -311,6 +345,7 @@ audio.addEventListener('volumechange', () => {
   volumeButton.classList.toggle('is-muted', muted);
 });
 
+updatePlayModeButton();
 renderTracks();
 window.aureliaVinylStage = createVinylStage(document.querySelector('#vinyl-canvas'));
 audio.volume = lastVolume;

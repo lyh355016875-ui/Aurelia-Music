@@ -4,6 +4,12 @@ Aurelia is a quiet, artful listening space inspired by premium audio equipment, 
 
 ## Releases
 
+### V1.0 — Stable release
+
+- Final pass across the listening-room visual system, responsive layouts, turntable scene, playback controls, cover/favorite interactions, and reduced-motion behavior.
+- Added compact, persistent list-repeat, repeat-one, and shuffle playback modes; automatic advance follows the selected mode.
+- Production build, regression checks, audio/visualizer interaction, idle-render behavior, and small-phone layout are verified.
+
 ### V0.9 — Performance and stability
 
 - The Three.js scene now renders on demand; playback, spectrum decay, label fades, resize, and pointer settling keep only the frames they need. A settled paused scene stops scheduling frames.
