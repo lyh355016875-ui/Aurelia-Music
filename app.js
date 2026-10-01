@@ -26,11 +26,20 @@ const totalTimeLabel = document.querySelector('#total-time');
 const volumeSlider = document.querySelector('#volume-control');
 const volumeButton = document.querySelector('#volume-button');
 const audioStatus = document.querySelector('#audio-status');
+const displayTransitionNodes = [
+  document.querySelector('.bottom-track-title'),
+  document.querySelector('.bottom-track-artist'),
+  document.querySelector('#stage-song-title'),
+  document.querySelector('#stage-song-artist'),
+  document.querySelector('.mini-art'),
+  document.querySelector('.empty-art')
+];
 let activeFilter = 'playing';
 let selectedTrack = tracks[0].id;
 let currentIndex = 0;
 let lastVolume = Number(volumeSlider.value);
 let draggingSeek = false;
+let displayTransitionId = 0;
 let audioContext = null;
 let mediaSource = null;
 let analyser = null;
@@ -111,19 +120,30 @@ function renderTracks() {
 }
 
 function updateTrackDisplay(track) {
-  document.querySelector('.bottom-track-title').textContent = track.title;
-  document.querySelector('.bottom-track-artist').textContent = track.artist;
-  document.querySelector('#stage-song-title').textContent = track.title;
-  document.querySelector('#stage-song-artist').textContent = `${track.artist} · ${track.album}`;
-  document.querySelector('#current-track-status').textContent = `ORIGINAL DEMO · ${track.time}`;
-  document.querySelector('.mini-art').style.setProperty('--cover-tone', track.tone);
-  document.querySelector('.empty-art').style.setProperty('--cover-tone', track.tone);
-  document.querySelector('.mini-art').style.backgroundImage = `linear-gradient(145deg, rgba(15,13,10,.04), rgba(15,13,10,.28)), url("${track.cover}")`;
-  document.querySelector('.empty-art').style.backgroundImage = `linear-gradient(145deg, rgba(15,13,10,.04), rgba(15,13,10,.2)), url("${track.cover}")`;
-  document.documentElement.style.setProperty('--cover-tone', track.tone);
-  window.aureliaVinylStage?.setCenterLabel(track.cover);
+  const transitionId = ++displayTransitionId;
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!reduceMotion) displayTransitionNodes.forEach((node) => node.classList.add('is-track-transitioning'));
   audioStatus.textContent = '';
-  renderTracks();
+  const commitDisplay = () => {
+    if (transitionId !== displayTransitionId) return;
+    document.querySelector('.bottom-track-title').textContent = track.title;
+    document.querySelector('.bottom-track-artist').textContent = track.artist;
+    document.querySelector('#stage-song-title').textContent = track.title;
+    document.querySelector('#stage-song-artist').textContent = `${track.artist} · ${track.album}`;
+    document.querySelector('#current-track-status').textContent = `ORIGINAL DEMO · ${track.time}`;
+    document.querySelector('.mini-art').style.setProperty('--cover-tone', track.tone);
+    document.querySelector('.empty-art').style.setProperty('--cover-tone', track.tone);
+    document.querySelector('.mini-art').style.backgroundImage = `linear-gradient(145deg, rgba(15,13,10,.04), rgba(15,13,10,.28)), url("${track.cover}")`;
+    document.querySelector('.empty-art').style.backgroundImage = `linear-gradient(145deg, rgba(15,13,10,.04), rgba(15,13,10,.2)), url("${track.cover}")`;
+    document.documentElement.style.setProperty('--cover-tone', track.tone);
+    window.aureliaVinylStage?.setCenterLabel(track.cover);
+    renderTracks();
+    if (!reduceMotion) requestAnimationFrame(() => requestAnimationFrame(() => {
+      if (transitionId === displayTransitionId) displayTransitionNodes.forEach((node) => node.classList.remove('is-track-transitioning'));
+    }));
+  };
+  if (reduceMotion) commitDisplay();
+  else window.setTimeout(commitDisplay, 170);
 }
 
 function updatePlaybackState(isPlaying) {
@@ -191,10 +211,12 @@ document.querySelectorAll('.nav-item').forEach((item) => item.addEventListener('
   document.querySelector('.breadcrumb-page').textContent = item.dataset.page;
 }));
 
-playButton.addEventListener('click', () => {
+const togglePlayback = () => {
   if (audio.paused) playAudio();
   else audio.pause();
-});
+};
+playButton.addEventListener('click', togglePlayback);
+window.addEventListener('aurelia:vinyl-toggle', togglePlayback);
 document.querySelector('#previous-track').addEventListener('click', () => switchTrack(currentIndex - 1));
 document.querySelector('#next-track').addEventListener('click', () => switchTrack(currentIndex + 1));
 audio.addEventListener('play', () => updatePlaybackState(true));

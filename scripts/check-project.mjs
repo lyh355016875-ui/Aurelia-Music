@@ -46,6 +46,12 @@ assert.ok(scene.includes('getByteFrequencyData(frequencyData)'), 'The scene shou
 assert.ok(scene.includes('new THREE.InstancedMesh') && scene.includes('visualizerSegments = 56'), 'The spectrum should use a bounded 56-segment instanced ring');
 assert.ok(scene.includes('aurelia:analyzer-ready'), 'The scene should subscribe to the single analyser instance');
 assert.ok(scene.includes('getVisualizerState'), 'Analyzer connection and visualization state should be observable for verification');
+assert.ok(html.includes('role="button" tabindex="0" aria-label="点击黑胶唱片播放或暂停"'), 'The vinyl must be keyboard accessible with a playback label');
+assert.ok(scene.includes('raycaster.intersectObject(recordGroup, true)') && scene.includes('aurelia:vinyl-toggle'), 'Clicking the 3D record should dispatch the playback toggle');
+assert.ok(app.includes('displayTransitionNodes') && app.includes('is-track-transitioning'), 'Track title and cover updates should crossfade');
+assert.ok(scene.includes('labelTargetOpacity') && scene.includes('camera.position.y'), 'The 3D center label should fade and pointer parallax should tilt smoothly');
+assert.ok(css.includes('.is-track-transitioning') && css.includes('background-color .55s ease'), 'V0.7 should include cover transitions and subtle background-tone animation');
+assert.ok(css.includes(':active') && html.includes('role="button" tabindex="0"'), 'Controls should expose press state and keyboard interaction');
 assert.ok(scene.includes('RoundedBoxGeometry') && scene.includes('CylinderGeometry'), '3D scene should include the turntable plinth and disc');
 assert.ok(scene.includes('aurelia:play-state'), '3D rotation should expose a playback-state hook');
 assert.ok(packageJson.dependencies.three, 'Three.js should be a local project dependency');
@@ -55,4 +61,4 @@ assert.ok(css.includes('@media (max-width: 760px)'), 'Tablet/mobile layout break
 assert.ok(css.includes('@media (max-width: 400px)'), 'Small-phone layout breakpoint should exist');
 assert.ok(css.includes('prefers-reduced-motion: reduce'), 'Reduced-motion preference should be respected');
 assert.ok(!html.includes('http://') && !html.includes('https://'), 'Page should not load remote runtime assets');
-console.log('V0.1–V0.6 foundation, UI, 3D, audio, playlist/art, and analyser checks passed.');
+console.log('V0.1–V0.7 foundation, UI, 3D, audio, artwork, analyser, and interaction checks passed.');

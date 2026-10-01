@@ -333,3 +333,16 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--gold-soft); out
 .track-playing-mark i:nth-child(3) { height: 7px; animation-delay: .36s; }
 @keyframes playing-bars { to { height: 3px; opacity: .58; } }
 @media (max-width: 760px) { .hero { background-position: 62% center; } }
+
+/* V0.7 — tactile, accessible interactions and quiet track transitions */
+.vinyl-canvas { pointer-events: auto; cursor: default; touch-action: pan-y; }
+.vinyl-canvas:focus-visible { outline: 2px solid rgba(224,199,149,.82); outline-offset: -5px; border-radius: 12px; }
+.hero::after { background-color: color-mix(in srgb, var(--cover-tone, #75644a) 8%, transparent); background-blend-mode: soft-light; transition: background-color .55s ease; }
+.nav-item, .queue-tab, .track-row, .icon-button, .control-button, .play-button, .volume-button { transition: color .22s ease, background-color .22s ease, border-color .22s ease, box-shadow .22s ease, transform .18s ease, opacity .17s ease; }
+.track-row:active { transform: scale(.992); }
+.control-button:hover:not(:disabled), .play-button:hover:not(:disabled), .volume-button:hover:not(:disabled), .icon-button:hover:not(:disabled) { transform: translateY(-1px); }
+.control-button:active:not(:disabled), .play-button:active:not(:disabled), .volume-button:active:not(:disabled), .icon-button:active:not(:disabled) { transform: translateY(0) scale(.95); }
+.is-track-transitioning { opacity: .2; transform: translateY(3px); filter: blur(.8px); transition: opacity .17s ease, transform .17s ease, filter .17s ease; }
+@media (prefers-reduced-motion: reduce) {
+  .is-track-transitioning, .nav-item, .queue-tab, .track-row, .icon-button, .control-button, .play-button, .volume-button { transition: none !important; }
+}

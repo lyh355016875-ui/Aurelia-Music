@@ -4,6 +4,12 @@ Aurelia is a quiet, artful listening space inspired by premium audio equipment, 
 
 ## Releases
 
+### V0.7 — Tactile interactions
+
+- Hover over the 3D scene for restrained parallax; click/tap the record or focus it and press Enter/Space to play or pause.
+- Track metadata and cover cards crossfade within roughly 340 ms; the 3D label fades between covers, while the hero image gains a very subtle cover-tone wash.
+- Buttons include hover, pressed, and visible keyboard-focus feedback; transitions respect reduced-motion preferences.
+
 ### V0.6 — Music visualization
 
 - Creates one Web Audio context, media-element source, and analyser only when playback is first requested; normal audio remains available when analysis is unsupported.

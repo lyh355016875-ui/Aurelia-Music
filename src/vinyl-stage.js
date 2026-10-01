@@ -160,15 +160,18 @@ export function createVinylStage(canvas) {
   }
 
   const centerLabel = makeCenterLabel();
-  const labelMaterial = new THREE.MeshPhysicalMaterial({ map: centerLabel.texture, roughness: .4, metalness: .08, clearcoat: .16, side: THREE.DoubleSide });
+  const labelMaterial = new THREE.MeshPhysicalMaterial({ map: centerLabel.texture, roughness: .4, metalness: .08, clearcoat: .16, side: THREE.DoubleSide, transparent: true, opacity: 1, depthWrite: false });
   const label = new THREE.Mesh(new THREE.CircleGeometry(.282, 72), labelMaterial);
   label.rotation.x = -Math.PI / 2;
   label.position.y = .042;
   recordGroup.add(label);
   let labelGeneration = 0;
   let centerLabelSource = '';
+  let labelOpacity = 1;
+  let labelTargetOpacity = 1;
   const setCenterLabel = (source) => {
     const generation = ++labelGeneration;
+    labelTargetOpacity = 0;
     const image = new Image();
     image.decoding = 'async';
     image.onload = () => {
@@ -183,8 +186,13 @@ export function createVinylStage(canvas) {
       context.stroke();
       centerLabel.texture.needsUpdate = true;
       centerLabelSource = source;
+      labelTargetOpacity = 1;
     };
-    image.onerror = () => console.warn(`Could not load vinyl label image: ${source}`);
+    image.onerror = () => {
+      if (generation !== labelGeneration) return;
+      labelTargetOpacity = 1;
+      console.warn(`Could not load vinyl label image: ${source}`);
+    };
     image.src = source;
   };
   const spindle = new THREE.Mesh(new THREE.CylinderGeometry(.025, .03, .04, 24), trimMaterial);
@@ -270,13 +278,34 @@ export function createVinylStage(canvas) {
   observer.observe(canvas);
   resize();
 
+  const raycaster = new THREE.Raycaster();
+  const rayPointer = new THREE.Vector2();
+  const hitRecord = (event) => {
+    const rect = canvas.getBoundingClientRect();
+    rayPointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    rayPointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(rayPointer, camera);
+    return raycaster.intersectObject(recordGroup, true).length > 0;
+  };
+  const onCanvasClick = (event) => {
+    if (hitRecord(event)) window.dispatchEvent(new CustomEvent('aurelia:vinyl-toggle'));
+  };
+  const onCanvasKeyDown = (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    window.dispatchEvent(new CustomEvent('aurelia:vinyl-toggle'));
+  };
   const onPointerMove = (event) => {
     const rect = mount.getBoundingClientRect();
     targetX = THREE.MathUtils.clamp((event.clientX - rect.left) / rect.width * 2 - 1, -1, 1);
     targetY = THREE.MathUtils.clamp((event.clientY - rect.top) / rect.height * 2 - 1, -1, 1);
+    canvas.style.cursor = hitRecord(event) ? 'pointer' : 'default';
   };
-  const onPointerLeave = () => { targetX = 0; targetY = 0; };
-  const onPlayState = (event) => { playing = Boolean(event.detail?.playing); };
+  const onPointerLeave = () => { targetX = 0; targetY = 0; canvas.style.cursor = 'default'; };
+  const onPlayState = (event) => {
+    playing = Boolean(event.detail?.playing);
+    canvas.setAttribute('aria-label', playing ? '点击黑胶唱片暂停' : '点击黑胶唱片播放');
+  };
   const onAnalyzerReady = (event) => {
     audioAnalyser = event.detail?.analyser ?? null;
     audioContext = event.detail?.audioContext ?? null;
@@ -302,6 +331,8 @@ export function createVinylStage(canvas) {
   };
   mount?.addEventListener('pointermove', onPointerMove, { passive: true });
   mount?.addEventListener('pointerleave', onPointerLeave, { passive: true });
+  canvas.addEventListener('click', onCanvasClick);
+  canvas.addEventListener('keydown', onCanvasKeyDown);
   window.addEventListener('aurelia:play-state', onPlayState);
   window.addEventListener('aurelia:analyzer-ready', onAnalyzerReady);
 
@@ -315,8 +346,11 @@ export function createVinylStage(canvas) {
     speed = THREE.MathUtils.damp(speed, targetSpeed, 1.8, delta);
     recordGroup.rotation.y += speed * delta;
     camera.position.x = THREE.MathUtils.damp(camera.position.x, targetX * .12, 1.6, delta);
+    camera.position.y = THREE.MathUtils.damp(camera.position.y, 3.35 - targetY * .055, 1.6, delta);
     camera.position.z = THREE.MathUtils.damp(camera.position.z, 4.55 + targetY * .08, 1.6, delta);
     camera.lookAt(targetX * .035, -.04 + targetY * .025, 0);
+    labelOpacity = THREE.MathUtils.damp(labelOpacity, labelTargetOpacity, 8, delta);
+    labelMaterial.opacity = labelOpacity;
     updateVisualizer(delta);
     renderer.render(scene, camera);
   };
@@ -331,6 +365,8 @@ export function createVinylStage(canvas) {
       observer.disconnect();
       mount?.removeEventListener('pointermove', onPointerMove);
       mount?.removeEventListener('pointerleave', onPointerLeave);
+      canvas.removeEventListener('click', onCanvasClick);
+      canvas.removeEventListener('keydown', onCanvasKeyDown);
       window.removeEventListener('aurelia:play-state', onPlayState);
       window.removeEventListener('aurelia:analyzer-ready', onAnalyzerReady);
       scene.traverse((object) => {
