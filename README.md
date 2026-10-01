@@ -4,6 +4,13 @@ Aurelia is a quiet, artful listening space inspired by premium audio equipment, 
 
 ## Releases
 
+### V0.5 — Dynamic playlist and album artwork
+
+- Clicking a queue row switches its demo audio, title, artist, duration, and cover, then starts playback.
+- Track-specific generated cover art appears in the queue, now-playing card, mini player, and center label of the 3D record.
+- Reframed the center listening stage around a cinematic sunset room to follow the provided visual reference.
+- Current cover is highlighted; a restrained playback indicator appears only on the playing row.
+
 ### V0.4 — Audio playback
 
 - Nine bundled, original 36-second instrumental demo loops (MP3); sample song/artist metadata is illustrative and the files are not original commercial recordings.

@@ -49,7 +49,7 @@ function makeCenterLabel() {
   ctx.fillText('33⅓ RPM  ·  SIDE A', 256, 361);
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
-  return texture;
+  return { canvas, texture };
 }
 
 function addCylinderBetween(parent, from, to, radius, material, radialSegments = 20) {
@@ -159,10 +159,34 @@ export function createVinylStage(canvas) {
     recordGroup.add(ring);
   }
 
-  const label = new THREE.Mesh(new THREE.CylinderGeometry(.292, .292, .015, 72), new THREE.MeshPhysicalMaterial({ map: makeCenterLabel(), roughness: .38, metalness: .2, clearcoat: .25 }));
-  label.position.y = .034;
-  label.castShadow = true;
+  const centerLabel = makeCenterLabel();
+  const labelMaterial = new THREE.MeshPhysicalMaterial({ map: centerLabel.texture, roughness: .4, metalness: .08, clearcoat: .16, side: THREE.DoubleSide });
+  const label = new THREE.Mesh(new THREE.CircleGeometry(.282, 72), labelMaterial);
+  label.rotation.x = -Math.PI / 2;
+  label.position.y = .042;
   recordGroup.add(label);
+  let labelGeneration = 0;
+  let centerLabelSource = '';
+  const setCenterLabel = (source) => {
+    const generation = ++labelGeneration;
+    const image = new Image();
+    image.decoding = 'async';
+    image.onload = () => {
+      if (destroyed || generation !== labelGeneration) return;
+      const context = centerLabel.canvas.getContext('2d');
+      context.clearRect(0, 0, centerLabel.canvas.width, centerLabel.canvas.height);
+      context.drawImage(image, 0, 0, centerLabel.canvas.width, centerLabel.canvas.height);
+      context.strokeStyle = 'rgba(238, 218, 175, .68)';
+      context.lineWidth = 8;
+      context.beginPath();
+      context.arc(256, 256, 248, 0, Math.PI * 2);
+      context.stroke();
+      centerLabel.texture.needsUpdate = true;
+      centerLabelSource = source;
+    };
+    image.onerror = () => console.warn(`Could not load vinyl label image: ${source}`);
+    image.src = source;
+  };
   const spindle = new THREE.Mesh(new THREE.CylinderGeometry(.025, .03, .04, 24), trimMaterial);
   spindle.position.y = .056;
   recordGroup.add(spindle);
@@ -255,6 +279,7 @@ export function createVinylStage(canvas) {
     setPlaying(value) { playing = Boolean(value); },
     destroy() {
       destroyed = true;
+      labelGeneration++;
       cancelAnimationFrame(frame);
       observer.disconnect();
       mount?.removeEventListener('pointermove', onPointerMove);
@@ -269,5 +294,7 @@ export function createVinylStage(canvas) {
       mount?.classList.remove('has-3d');
     }
   };
+  api.setCenterLabel = setCenterLabel;
+  api.getCenterLabelSource = () => centerLabelSource;
   return api;
 }

@@ -28,7 +28,15 @@ for (const control of ['audio-player', 'play-toggle', 'previous-track', 'next-tr
 }
 for (const slug of ['better-days', 'sunset-lover', 'empty-mountain', 'brightest-star', 'wind-wheat', 'city-stars', 'starts-wind', 'sunny-day', 'beyond-sea']) {
   assert.ok(existsSync(new URL(`../public/audio/${slug}.mp3`, import.meta.url)), `Missing local demo audio: ${slug}`);
+  assert.ok(existsSync(new URL(`../public/images/covers/${slug}.jpg`, import.meta.url)), `Missing track cover image: ${slug}`);
+  assert.ok(app.includes(`cover: '/images/covers/${slug}.jpg'`), `Track data should reference its cover: ${slug}`);
 }
+assert.ok(existsSync(new URL('../public/images/v05-listening-room.jpg', import.meta.url)), 'Cinematic listening-room background should exist');
+assert.ok(app.includes('switchTrack(index, true)'), 'Selecting a playlist row should start its audio');
+assert.ok(app.includes('setCenterLabel(track.cover)') && scene.includes('setCenterLabel'), 'Selected cover should update the 3D vinyl center label');
+assert.ok(scene.includes('centerLabel.texture.needsUpdate = true'), 'CanvasTexture should refresh after the cover image loads');
+assert.ok(scene.includes('getCenterLabelSource'), 'The active vinyl label source should be observable for runtime verification');
+assert.ok(css.includes("/images/v05-listening-room.jpg"), 'Hero should use the reference-inspired listening-room image');
 assert.ok(html.includes('并非原版录音'), 'Sample/demo recordings should be identified as non-original recordings');
 assert.ok(app.includes('audio.addEventListener(\'ended\''), 'Audio end should advance to the next track');
 assert.ok(app.includes('seekAtPointer') && app.includes('ArrowRight'), 'Seeking should support pointer and keyboard');
@@ -41,4 +49,4 @@ assert.ok(css.includes('@media (max-width: 760px)'), 'Tablet/mobile layout break
 assert.ok(css.includes('@media (max-width: 400px)'), 'Small-phone layout breakpoint should exist');
 assert.ok(css.includes('prefers-reduced-motion: reduce'), 'Reduced-motion preference should be respected');
 assert.ok(!html.includes('http://') && !html.includes('https://'), 'Page should not load remote runtime assets');
-console.log('V0.1 foundation, V0.2 interface, V0.3 scene, and V0.4 audio checks passed.');
+console.log('V0.1 foundation, V0.2 interface, V0.3 scene, V0.4 audio, and V0.5 playlist/art checks passed.');

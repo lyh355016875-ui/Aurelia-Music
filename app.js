@@ -1,15 +1,15 @@
 import { createVinylStage } from './src/vinyl-stage.js';
 
 const tracks = [
-  { id: 'better-days', title: 'Better Days', artist: 'NEIKED · Mae Muller', album: 'Better Days', time: '0:36', tone: '#716044', audio: '/audio/better-days.mp3' },
-  { id: 'sunset-lover', title: 'Sunset Lover', artist: 'Petit Biscuit', album: 'Presence', time: '0:36', tone: '#9b7650', audio: '/audio/sunset-lover.mp3' },
-  { id: 'empty-mountain', title: '空山新雨后', artist: '音阙诗听', album: '山水之间', time: '0:36', tone: '#596650', audio: '/audio/empty-mountain.mp3' },
-  { id: 'brightest-star', title: '夜空中最亮的星', artist: '逃跑计划', album: '世界', time: '0:36', tone: '#697084', audio: '/audio/brightest-star.mp3' },
-  { id: 'wind-wheat', title: '风吹麦浪', artist: '李健', album: '想念你', time: '0:36', tone: '#98875b', audio: '/audio/wind-wheat.mp3' },
-  { id: 'city-stars', title: 'City of Stars', artist: 'Ryan Gosling · Emma Stone', album: 'La La Land', time: '0:36', tone: '#6d5865', audio: '/audio/city-stars.mp3' },
-  { id: 'starts-wind', title: '起风了', artist: '买辣椒也用券', album: '起风了', time: '0:36', tone: '#806550', audio: '/audio/starts-wind.mp3' },
-  { id: 'sunny-day', title: '晴天', artist: '周杰伦', album: '叶惠美', time: '0:36', tone: '#a17c4d', audio: '/audio/sunny-day.mp3' },
-  { id: 'beyond-sea', title: '海阔天空', artist: 'Beyond', album: '乐与怒', time: '0:36', tone: '#526573', audio: '/audio/beyond-sea.mp3' }
+  { id: 'better-days', title: 'Better Days', artist: 'NEIKED · Mae Muller', album: 'Better Days', time: '0:36', tone: '#716044', audio: '/audio/better-days.mp3', cover: '/images/covers/better-days.jpg' },
+  { id: 'sunset-lover', title: 'Sunset Lover', artist: 'Petit Biscuit', album: 'Presence', time: '0:36', tone: '#9b7650', audio: '/audio/sunset-lover.mp3', cover: '/images/covers/sunset-lover.jpg' },
+  { id: 'empty-mountain', title: '空山新雨后', artist: '音阙诗听', album: '山水之间', time: '0:36', tone: '#596650', audio: '/audio/empty-mountain.mp3', cover: '/images/covers/empty-mountain.jpg' },
+  { id: 'brightest-star', title: '夜空中最亮的星', artist: '逃跑计划', album: '世界', time: '0:36', tone: '#697084', audio: '/audio/brightest-star.mp3', cover: '/images/covers/brightest-star.jpg' },
+  { id: 'wind-wheat', title: '风吹麦浪', artist: '李健', album: '想念你', time: '0:36', tone: '#98875b', audio: '/audio/wind-wheat.mp3', cover: '/images/covers/wind-wheat.jpg' },
+  { id: 'city-stars', title: 'City of Stars', artist: 'Ryan Gosling · Emma Stone', album: 'La La Land', time: '0:36', tone: '#6d5865', audio: '/audio/city-stars.mp3', cover: '/images/covers/city-stars.jpg' },
+  { id: 'starts-wind', title: '起风了', artist: '买辣椒也用券', album: '起风了', time: '0:36', tone: '#806550', audio: '/audio/starts-wind.mp3', cover: '/images/covers/starts-wind.jpg' },
+  { id: 'sunny-day', title: '晴天', artist: '周杰伦', album: '叶惠美', time: '0:36', tone: '#a17c4d', audio: '/audio/sunny-day.mp3', cover: '/images/covers/sunny-day.jpg' },
+  { id: 'beyond-sea', title: '海阔天空', artist: 'Beyond', album: '乐与怒', time: '0:36', tone: '#526573', audio: '/audio/beyond-sea.mp3', cover: '/images/covers/beyond-sea.jpg' }
 ];
 const recommendations = [tracks[1], tracks[2], tracks[4], tracks[5], tracks[0], tracks[7]];
 const list = document.querySelector('#queue-list');
@@ -50,19 +50,23 @@ function getVisibleTracks() {
 
 function renderTracks() {
   const visible = getVisibleTracks();
-  list.innerHTML = visible.map((track, index) => `
-    <button class="track-row${selectedTrack === track.id ? ' is-selected' : ''}" type="button" data-track-id="${track.id}" aria-pressed="${selectedTrack === track.id}" style="--cover-tone:${track.tone}">
+  list.innerHTML = visible.map((track, index) => {
+    const isCurrent = tracks[currentIndex].id === track.id;
+    const isPlaying = isCurrent && !audio.paused;
+    return `
+    <button class="track-row${isCurrent ? ' is-selected' : ''}${isPlaying ? ' is-playing' : ''}" type="button" data-track-id="${track.id}" aria-pressed="${isCurrent}" style="--cover-tone:${track.tone};--cover-image:url('${track.cover}')">
       <span class="track-art" aria-hidden="true"><span class="track-art-sun"></span><span class="track-art-horizon"></span><span class="track-art-disc"></span></span>
       <span class="track-copy"><span class="track-title">${escapeText(track.title)}</span><span class="track-artist">${escapeText(track.artist)} <span class="track-separator">·</span> ${escapeText(track.album)}</span></span>
-      <span class="track-index">${String(index + 1).padStart(2, '0')}</span>
+      <span class="track-index">${isPlaying ? '<span class="track-playing-mark" aria-hidden="true"><i></i><i></i><i></i></span>' : String(index + 1).padStart(2, '0')}</span>
       <span class="track-duration">${track.time}</span>
-    </button>`).join('');
+    </button>`;
+  }).join('');
   count.textContent = `${String(visible.length).padStart(2, '0')} TRACK${visible.length === 1 ? '' : 'S'}`;
   empty.hidden = visible.length > 0;
   list.hidden = visible.length === 0;
   list.querySelectorAll('.track-row').forEach((row) => row.addEventListener('click', () => {
-    selectedTrack = row.dataset.trackId;
-    renderTracks();
+    const index = tracks.findIndex((track) => track.id === row.dataset.trackId);
+    if (index >= 0) switchTrack(index, true);
   }));
 }
 
@@ -70,9 +74,14 @@ function updateTrackDisplay(track) {
   document.querySelector('.bottom-track-title').textContent = track.title;
   document.querySelector('.bottom-track-artist').textContent = track.artist;
   document.querySelector('#stage-song-title').textContent = track.title;
+  document.querySelector('#stage-song-artist').textContent = `${track.artist} · ${track.album}`;
   document.querySelector('#current-track-status').textContent = `ORIGINAL DEMO · ${track.time}`;
   document.querySelector('.mini-art').style.setProperty('--cover-tone', track.tone);
   document.querySelector('.empty-art').style.setProperty('--cover-tone', track.tone);
+  document.querySelector('.mini-art').style.backgroundImage = `linear-gradient(145deg, rgba(15,13,10,.04), rgba(15,13,10,.28)), url("${track.cover}")`;
+  document.querySelector('.empty-art').style.backgroundImage = `linear-gradient(145deg, rgba(15,13,10,.04), rgba(15,13,10,.2)), url("${track.cover}")`;
+  document.documentElement.style.setProperty('--cover-tone', track.tone);
+  window.aureliaVinylStage?.setCenterLabel(track.cover);
   audioStatus.textContent = '';
   renderTracks();
 }
@@ -85,6 +94,7 @@ function updatePlaybackState(isPlaying) {
     : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 10 6-10 6z"/></svg>';
   document.documentElement.dataset.playing = String(isPlaying);
   window.dispatchEvent(new CustomEvent('aurelia:play-state', { detail: { playing: isPlaying } }));
+  renderTracks();
 }
 
 function updateProgress() {

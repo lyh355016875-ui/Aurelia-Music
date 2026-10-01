@@ -316,3 +316,20 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--gold-soft); out
   .bottom-player { grid-template-columns: minmax(70px,1fr) 76px minmax(60px,.8fr) 44px; gap: 5px; }
   #volume-control { width: 22px; }
 }
+/* V0.5 — cinematic sunset room and track-specific cover artwork */
+.hero { background-color: #1a1713; background-image: linear-gradient(90deg, rgba(18,16,14,.79) 0%, rgba(18,16,14,.55) 43%, rgba(18,16,14,.12) 100%), linear-gradient(0deg, rgba(18,16,14,.42), transparent 48%), url('/images/v05-listening-room.jpg'); background-position: center; background-size: cover; }
+.hero::after { content: ""; position: absolute; z-index: 1; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(10,9,8,.12), transparent 22% 70%, rgba(10,9,8,.2)); }
+.hero-copy, .artwork-stage, .hero-footer { z-index: 2; }
+.hero h1 { text-shadow: 0 2px 25px rgba(10,8,6,.42); }
+.hero-description { color: rgba(242,235,221,.78); text-shadow: 0 1px 12px rgba(10,8,6,.72); }
+.hero-meta, .artwork-caption, .artwork-index, .hero-footer { color: rgba(238,221,185,.72); }
+.track-art { background: var(--cover-image, linear-gradient(145deg, color-mix(in srgb, var(--cover-tone), #e4d1a4 18%), #201e19 85%)) center / cover no-repeat; }
+.track-art-sun, .track-art-horizon, .track-art-disc { opacity: .3; }
+.mini-art, .empty-art { background-position: center; background-size: cover; }
+.track-index { min-width: 16px; display: flex; justify-content: flex-end; align-items: center; }
+.track-playing-mark { height: 12px; display: inline-flex; align-items: flex-end; gap: 2px; }
+.track-playing-mark i { width: 2px; height: 5px; border-radius: 2px; background: var(--gold); animation: playing-bars .72s ease-in-out infinite alternate; }
+.track-playing-mark i:nth-child(2) { height: 11px; animation-delay: .18s; }
+.track-playing-mark i:nth-child(3) { height: 7px; animation-delay: .36s; }
+@keyframes playing-bars { to { height: 3px; opacity: .58; } }
+@media (max-width: 760px) { .hero { background-position: 62% center; } }
