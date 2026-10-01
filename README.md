@@ -2,21 +2,23 @@
 
 Aurelia is a quiet, artful listening space inspired by premium audio equipment, vinyl records, and modern music apps.
 
-## V0.1 — Project foundation
+## Releases
 
-This first version establishes the page structure and visual foundation only:
+### V0.2 — Premium listening-room interface
 
-- Left navigation area
-- Central listening/player stage
-- Right-side queue area
-- Fixed bottom player-control area
-- Responsive dark charcoal, warm-gold, and ivory visual system
+- Three-column desktop layout with navigation, central listening stage, and a dedicated queue.
+- Restrained charcoal, warm-gold, and ivory visual language.
+- Searchable sample catalog with playlist and similar-recommendation tabs.
+- Responsive tablet and mobile layouts.
+- Track selection and navigation feedback (audio playback arrives in V0.4).
 
-Playback, search, playlist data, audio analysis, and interactive 3D are intentionally out of scope for V0.1.
+### V0.1 — Project foundation
+
+Established the page regions and responsive visual foundation without playback, search, audio analysis, or interactive 3D.
 
 ## Run locally
 
-Requires Python 3 and Node.js (only for the included structure check; no npm packages are required).
+Requires Python 3 and Node.js; no npm packages are required for V0.2.
 
 ```bash
 npm run dev
