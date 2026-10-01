@@ -56,6 +56,12 @@ assert.ok(html.includes('id="mini-player-return"') && html.includes('id="favorit
 assert.ok(app.includes('localStorage.setItem(favoritesStorageKey') && app.includes('aria-pressed'), 'Favorites should persist and expose their state accessibly');
 assert.ok(app.includes('miniPlayerReturn') && app.includes("scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth'"), 'The mini player should return focus to the central player');
 assert.ok(app.includes('favoriteIds.has(track.id)') && app.includes('updateFavoriteButton'), 'Favorite state should follow the active track');
+assert.ok(scene.includes('let scheduleFrame = () => {}') && scene.includes('frame === 0'), 'The render loop should schedule at most one pending frame on demand');
+assert.ok(scene.includes('document.visibilityState === \'hidden\'') && scene.includes('visibilitychange'), 'Rendering should suspend in hidden tabs and resume when visible');
+assert.ok(scene.includes('api.getRenderState') && scene.includes('renderCount'), 'Idle rendering state should be observable for verification');
+assert.ok(scene.includes('const geometries = new Set()') && scene.includes('const materials = new Set()') && scene.includes('const textures = new Set()'), 'Scene teardown should dispose unique GPU resources');
+assert.ok(scene.includes('geometry.dispose()') && scene.includes('texture.dispose()') && scene.includes('renderer.dispose()'), 'Three.js geometry, textures, and renderer should be released');
+assert.equal((app.match(/createMediaElementSource\(audio\)/g) || []).length, 1, 'The audio element should create only one MediaElementSource');
 assert.ok(scene.includes('RoundedBoxGeometry') && scene.includes('CylinderGeometry'), '3D scene should include the turntable plinth and disc');
 assert.ok(scene.includes('aurelia:play-state'), '3D rotation should expose a playback-state hook');
 assert.ok(packageJson.dependencies.three, 'Three.js should be a local project dependency');
@@ -65,4 +71,4 @@ assert.ok(css.includes('@media (max-width: 760px)'), 'Tablet/mobile layout break
 assert.ok(css.includes('@media (max-width: 400px)'), 'Small-phone layout breakpoint should exist');
 assert.ok(css.includes('prefers-reduced-motion: reduce'), 'Reduced-motion preference should be respected');
 assert.ok(!html.includes('http://') && !html.includes('https://'), 'Page should not load remote runtime assets');
-console.log('V0.1–V0.8 foundation, UI, 3D, audio, artwork, analyser, interaction, and Mini Player checks passed.');
+console.log('V0.1–V0.9 foundation, UI, 3D, audio, artwork, analyser, interactions, Mini Player, and stability checks passed.');

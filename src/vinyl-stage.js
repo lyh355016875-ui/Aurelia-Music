@@ -172,6 +172,7 @@ export function createVinylStage(canvas) {
   const setCenterLabel = (source) => {
     const generation = ++labelGeneration;
     labelTargetOpacity = 0;
+    scheduleFrame();
     const image = new Image();
     image.decoding = 'async';
     image.onload = () => {
@@ -187,10 +188,12 @@ export function createVinylStage(canvas) {
       centerLabel.texture.needsUpdate = true;
       centerLabelSource = source;
       labelTargetOpacity = 1;
+      scheduleFrame();
     };
     image.onerror = () => {
       if (generation !== labelGeneration) return;
       labelTargetOpacity = 1;
+      scheduleFrame();
       console.warn(`Could not load vinyl label image: ${source}`);
     };
     image.src = source;
@@ -264,6 +267,8 @@ export function createVinylStage(canvas) {
   const visualizerDummy = new THREE.Object3D();
   let speed = 0;
   let frame = 0;
+  let renderCount = 0;
+  let scheduleFrame = () => {};
   let destroyed = false;
 
   const resize = () => {
@@ -273,6 +278,7 @@ export function createVinylStage(canvas) {
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
+    scheduleFrame();
   };
   const observer = new ResizeObserver(resize);
   observer.observe(canvas);
@@ -287,8 +293,8 @@ export function createVinylStage(canvas) {
     raycaster.setFromCamera(rayPointer, camera);
     return raycaster.intersectObject(recordGroup, true).length > 0;
   };
-  const onCanvasClick = (event) => {
-    if (hitRecord(event)) window.dispatchEvent(new CustomEvent('aurelia:vinyl-toggle'));
+    const onCanvasClick = (event) => {
+      if (hitRecord(event)) window.dispatchEvent(new CustomEvent('aurelia:vinyl-toggle'));
   };
   const onCanvasKeyDown = (event) => {
     if (event.key !== 'Enter' && event.key !== ' ') return;
@@ -300,26 +306,31 @@ export function createVinylStage(canvas) {
     targetX = THREE.MathUtils.clamp((event.clientX - rect.left) / rect.width * 2 - 1, -1, 1);
     targetY = THREE.MathUtils.clamp((event.clientY - rect.top) / rect.height * 2 - 1, -1, 1);
     canvas.style.cursor = hitRecord(event) ? 'pointer' : 'default';
+    scheduleFrame();
   };
-  const onPointerLeave = () => { targetX = 0; targetY = 0; canvas.style.cursor = 'default'; };
+  const onPointerLeave = () => { targetX = 0; targetY = 0; canvas.style.cursor = 'default'; scheduleFrame(); };
   const onPlayState = (event) => {
     playing = Boolean(event.detail?.playing);
     canvas.setAttribute('aria-label', playing ? '点击黑胶唱片暂停' : '点击黑胶唱片播放');
+    scheduleFrame();
   };
   const onAnalyzerReady = (event) => {
     audioAnalyser = event.detail?.analyser ?? null;
     audioContext = event.detail?.audioContext ?? null;
     frequencyData = audioAnalyser ? new Uint8Array(audioAnalyser.frequencyBinCount) : null;
+    scheduleFrame();
   };
   const updateVisualizer = (delta) => {
     const activeAnalyzer = playing && audioContext?.state === 'running' && audioAnalyser && frequencyData;
     if (activeAnalyzer) audioAnalyser.getByteFrequencyData(frequencyData);
     else frequencyData?.fill(0);
+    let hasResidualEnergy = Boolean(activeAnalyzer);
     for (let index = 0; index < visualizerSegments; index++) {
       const angle = (index / visualizerSegments) * Math.PI * 2;
       const bin = Math.min((frequencyData?.length ?? 1) - 1, 2 + Math.floor((index / visualizerSegments) * 86));
       const energy = activeAnalyzer && frequencyData ? frequencyData[bin] / 255 : 0;
       visualizerLevels[index] = THREE.MathUtils.damp(visualizerLevels[index], energy, 5.5, delta);
+      if (visualizerLevels[index] > .002) hasResidualEnergy = true;
       const barHeight = .008 + visualizerLevels[index] * .11;
       visualizerDummy.position.set(-.37 + Math.cos(angle) * 1.17, .078 + barHeight / 2, .04 + Math.sin(angle) * 1.17);
       visualizerDummy.scale.set(1, barHeight, 1);
@@ -328,6 +339,7 @@ export function createVinylStage(canvas) {
       visualizer.setMatrixAt(index, visualizerDummy.matrix);
     }
     visualizer.instanceMatrix.needsUpdate = true;
+    return hasResidualEnergy;
   };
   mount?.addEventListener('pointermove', onPointerMove, { passive: true });
   mount?.addEventListener('pointerleave', onPointerLeave, { passive: true });
@@ -335,15 +347,26 @@ export function createVinylStage(canvas) {
   canvas.addEventListener('keydown', onCanvasKeyDown);
   window.addEventListener('aurelia:play-state', onPlayState);
   window.addEventListener('aurelia:analyzer-ready', onAnalyzerReady);
+  const onVisibilityChange = () => {
+    if (document.visibilityState === 'hidden') {
+      if (frame) cancelAnimationFrame(frame);
+      frame = 0;
+    } else scheduleFrame();
+  };
+  document.addEventListener('visibilitychange', onVisibilityChange);
 
   let previous = performance.now();
   const tick = (now) => {
-    if (destroyed) return;
-    frame = requestAnimationFrame(tick);
+    frame = 0;
+    if (destroyed || document.visibilityState === 'hidden') return;
     const delta = Math.min((now - previous) / 1000, .05);
     previous = now;
     const targetSpeed = playing ? 1.9 : 0;
-    speed = THREE.MathUtils.damp(speed, targetSpeed, 1.8, delta);
+    const cameraNeedsMotion = Math.abs(camera.position.x - targetX * .12) > .001
+      || Math.abs(camera.position.y - (3.35 - targetY * .055)) > .001
+      || Math.abs(camera.position.z - (4.55 + targetY * .08)) > .001;
+    const labelNeedsMotion = Math.abs(labelOpacity - labelTargetOpacity) > .005;
+    speed = THREE.MathUtils.damp(speed, targetSpeed, playing ? 1.8 : 4.2, delta);
     recordGroup.rotation.y += speed * delta;
     camera.position.x = THREE.MathUtils.damp(camera.position.x, targetX * .12, 1.6, delta);
     camera.position.y = THREE.MathUtils.damp(camera.position.y, 3.35 - targetY * .055, 1.6, delta);
@@ -351,13 +374,18 @@ export function createVinylStage(canvas) {
     camera.lookAt(targetX * .035, -.04 + targetY * .025, 0);
     labelOpacity = THREE.MathUtils.damp(labelOpacity, labelTargetOpacity, 8, delta);
     labelMaterial.opacity = labelOpacity;
-    updateVisualizer(delta);
+    const visualizerActive = updateVisualizer(delta);
     renderer.render(scene, camera);
+    renderCount++;
+    if (playing || Math.abs(speed) > .004 || Math.abs(speed - targetSpeed) > .004 || cameraNeedsMotion || labelNeedsMotion || visualizerActive) scheduleFrame();
   };
-  frame = requestAnimationFrame(tick);
+  scheduleFrame = () => {
+    if (!destroyed && document.visibilityState !== 'hidden' && frame === 0) frame = requestAnimationFrame(tick);
+  };
+  scheduleFrame();
 
   const api = {
-    setPlaying(value) { playing = Boolean(value); },
+    setPlaying(value) { playing = Boolean(value); scheduleFrame(); },
     destroy() {
       destroyed = true;
       labelGeneration++;
@@ -369,17 +397,30 @@ export function createVinylStage(canvas) {
       canvas.removeEventListener('keydown', onCanvasKeyDown);
       window.removeEventListener('aurelia:play-state', onPlayState);
       window.removeEventListener('aurelia:analyzer-ready', onAnalyzerReady);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      const geometries = new Set();
+      const materials = new Set();
+      const textures = new Set();
       scene.traverse((object) => {
-        object.geometry?.dispose();
-        if (Array.isArray(object.material)) object.material.forEach((material) => material.dispose());
-        else object.material?.dispose();
+        if (object.geometry) geometries.add(object.geometry);
+        const objectMaterials = Array.isArray(object.material) ? object.material : [object.material];
+        for (const material of objectMaterials) {
+          if (!material) continue;
+          materials.add(material);
+          for (const value of Object.values(material)) if (value?.isTexture) textures.add(value);
+        }
       });
+      for (const geometry of geometries) geometry.dispose();
+      for (const material of materials) material.dispose();
+      for (const texture of textures) texture.dispose();
+      renderer.renderLists?.dispose?.();
       renderer.dispose();
       mount?.classList.remove('has-3d');
     }
   };
   api.setCenterLabel = setCenterLabel;
   api.getCenterLabelSource = () => centerLabelSource;
+  api.getRenderState = () => ({ scheduled: frame !== 0, renderCount });
   api.getVisualizerState = () => ({
     connected: Boolean(audioAnalyser),
     active: Boolean(playing && audioContext?.state === 'running'),

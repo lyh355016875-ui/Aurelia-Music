@@ -4,6 +4,12 @@ Aurelia is a quiet, artful listening space inspired by premium audio equipment, 
 
 ## Releases
 
+### V0.9 — Performance and stability
+
+- The Three.js scene now renders on demand; playback, spectrum decay, label fades, resize, and pointer settling keep only the frames they need. A settled paused scene stops scheduling frames.
+- Hidden tabs suspend rendering and resume cleanly when visible.
+- Scene teardown removes event listeners and disposes each shared geometry, material, and texture once; the Web Audio graph remains single-instance and the visualizer stays capped at 56 segments.
+
 ### V0.8 — Mini player and details
 
 - The docked mini player shows the current cover, track, artist, play state, and a favorite heart.
