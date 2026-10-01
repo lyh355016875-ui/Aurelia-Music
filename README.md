@@ -4,6 +4,11 @@ Aurelia is a quiet, artful listening space inspired by premium audio equipment, 
 
 ## Releases
 
+### V0.6 — Music visualization
+
+- Creates one Web Audio context, media-element source, and analyser only when playback is first requested; normal audio remains available when analysis is unsupported.
+- Adds a restrained 56-segment warm-gold circular spectrum around the 3D record, driven by real audio frequency bins and settling when paused.
+
 ### V0.5 — Dynamic playlist and album artwork
 
 - Clicking a queue row switches its demo audio, title, artist, duration, and cover, then starts playback.

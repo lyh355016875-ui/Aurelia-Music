@@ -31,6 +31,46 @@ let selectedTrack = tracks[0].id;
 let currentIndex = 0;
 let lastVolume = Number(volumeSlider.value);
 let draggingSeek = false;
+let audioContext = null;
+let mediaSource = null;
+let analyser = null;
+
+function initializeAnalyser() {
+  if (analyser) return analyser;
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) {
+    audioStatus.textContent = '当前浏览器不支持实时音乐可视化。';
+    return null;
+  }
+  try {
+    audioContext = new AudioContextClass();
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 1024;
+    analyser.smoothingTimeConstant = .86;
+    analyser.minDecibels = -78;
+    analyser.maxDecibels = -18;
+    mediaSource = audioContext.createMediaElementSource(audio);
+    mediaSource.connect(analyser);
+    analyser.connect(audioContext.destination);
+    window.dispatchEvent(new CustomEvent('aurelia:analyzer-ready', { detail: { analyser, audioContext } }));
+    return analyser;
+  } catch (error) {
+    console.warn('Audio analyser could not be initialized; standard audio playback remains available.', error);
+    analyser = null;
+    audioStatus.textContent = '实时可视化暂不可用，播放器仍可正常使用。';
+    return null;
+  }
+}
+
+function playAudio() {
+  initializeAnalyser();
+  if (audioContext?.state === 'suspended') audioContext.resume().catch(() => {});
+  try {
+    audio.play().catch(() => { audioStatus.textContent = '音频无法播放，请检查浏览器的音频权限。'; });
+  } catch {
+    audioStatus.textContent = '音频无法播放，请检查浏览器的音频权限。';
+  }
+}
 
 function escapeText(value) {
   return value.replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
@@ -128,7 +168,7 @@ function switchTrack(nextIndex, autoplay = !audio.paused) {
   audio.load();
   updateTrackDisplay(track);
   updateProgress();
-  if (autoplay) audio.play().catch(() => { audioStatus.textContent = '音频无法播放，请检查浏览器的音频权限。'; });
+  if (autoplay) playAudio();
 }
 
 search.addEventListener('input', renderTracks);
@@ -152,7 +192,7 @@ document.querySelectorAll('.nav-item').forEach((item) => item.addEventListener('
 }));
 
 playButton.addEventListener('click', () => {
-  if (audio.paused) audio.play().catch(() => { audioStatus.textContent = '音频无法播放，请检查浏览器的音频权限。'; });
+  if (audio.paused) playAudio();
   else audio.pause();
 });
 document.querySelector('#previous-track').addEventListener('click', () => switchTrack(currentIndex - 1));

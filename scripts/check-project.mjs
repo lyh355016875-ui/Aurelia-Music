@@ -40,6 +40,12 @@ assert.ok(css.includes("/images/v05-listening-room.jpg"), 'Hero should use the r
 assert.ok(html.includes('并非原版录音'), 'Sample/demo recordings should be identified as non-original recordings');
 assert.ok(app.includes('audio.addEventListener(\'ended\''), 'Audio end should advance to the next track');
 assert.ok(app.includes('seekAtPointer') && app.includes('ArrowRight'), 'Seeking should support pointer and keyboard');
+assert.ok(app.includes('createMediaElementSource(audio)') && app.includes('createAnalyser()'), 'V0.6 should connect one Web Audio media source to an analyser');
+assert.ok(app.includes('analyser.fftSize = 1024') && app.includes('aurelia:analyzer-ready'), 'Analyzer setup should use a stable FFT size and notify the scene');
+assert.ok(scene.includes('getByteFrequencyData(frequencyData)'), 'The scene should read live frequency data');
+assert.ok(scene.includes('new THREE.InstancedMesh') && scene.includes('visualizerSegments = 56'), 'The spectrum should use a bounded 56-segment instanced ring');
+assert.ok(scene.includes('aurelia:analyzer-ready'), 'The scene should subscribe to the single analyser instance');
+assert.ok(scene.includes('getVisualizerState'), 'Analyzer connection and visualization state should be observable for verification');
 assert.ok(scene.includes('RoundedBoxGeometry') && scene.includes('CylinderGeometry'), '3D scene should include the turntable plinth and disc');
 assert.ok(scene.includes('aurelia:play-state'), '3D rotation should expose a playback-state hook');
 assert.ok(packageJson.dependencies.three, 'Three.js should be a local project dependency');
@@ -49,4 +55,4 @@ assert.ok(css.includes('@media (max-width: 760px)'), 'Tablet/mobile layout break
 assert.ok(css.includes('@media (max-width: 400px)'), 'Small-phone layout breakpoint should exist');
 assert.ok(css.includes('prefers-reduced-motion: reduce'), 'Reduced-motion preference should be respected');
 assert.ok(!html.includes('http://') && !html.includes('https://'), 'Page should not load remote runtime assets');
-console.log('V0.1 foundation, V0.2 interface, V0.3 scene, V0.4 audio, and V0.5 playlist/art checks passed.');
+console.log('V0.1–V0.6 foundation, UI, 3D, audio, playlist/art, and analyser checks passed.');

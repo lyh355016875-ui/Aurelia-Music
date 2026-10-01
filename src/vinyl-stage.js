@@ -226,12 +226,34 @@ export function createVinylStage(canvas) {
   shadowPlane.receiveShadow = true;
   scene.add(shadowPlane);
 
+  const visualizerSegments = 56;
+  const visualizer = new THREE.InstancedMesh(
+    new THREE.CylinderGeometry(.009, .009, 1, 5),
+    new THREE.MeshBasicMaterial({ color: 0xc9a96b, transparent: true, opacity: .72, depthWrite: false }),
+    visualizerSegments
+  );
+  visualizer.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  visualizer.frustumCulled = false;
+  scene.add(visualizer);
+  const visualizerOrbit = new THREE.Mesh(
+    new THREE.TorusGeometry(1.17, .003, 5, 96),
+    new THREE.MeshBasicMaterial({ color: 0xc9a96b, transparent: true, opacity: .34, depthWrite: false })
+  );
+  visualizerOrbit.rotation.x = Math.PI / 2;
+  visualizerOrbit.position.set(-.37, .076, .04);
+  scene.add(visualizerOrbit);
+
   mount?.classList.add('has-3d');
   let width = 1;
   let height = 1;
   let targetX = 0;
   let targetY = 0;
   let playing = false;
+  let audioAnalyser = null;
+  let audioContext = null;
+  let frequencyData = null;
+  const visualizerLevels = new Float32Array(visualizerSegments);
+  const visualizerDummy = new THREE.Object3D();
   let speed = 0;
   let frame = 0;
   let destroyed = false;
@@ -255,9 +277,33 @@ export function createVinylStage(canvas) {
   };
   const onPointerLeave = () => { targetX = 0; targetY = 0; };
   const onPlayState = (event) => { playing = Boolean(event.detail?.playing); };
+  const onAnalyzerReady = (event) => {
+    audioAnalyser = event.detail?.analyser ?? null;
+    audioContext = event.detail?.audioContext ?? null;
+    frequencyData = audioAnalyser ? new Uint8Array(audioAnalyser.frequencyBinCount) : null;
+  };
+  const updateVisualizer = (delta) => {
+    const activeAnalyzer = playing && audioContext?.state === 'running' && audioAnalyser && frequencyData;
+    if (activeAnalyzer) audioAnalyser.getByteFrequencyData(frequencyData);
+    else frequencyData?.fill(0);
+    for (let index = 0; index < visualizerSegments; index++) {
+      const angle = (index / visualizerSegments) * Math.PI * 2;
+      const bin = Math.min((frequencyData?.length ?? 1) - 1, 2 + Math.floor((index / visualizerSegments) * 86));
+      const energy = activeAnalyzer && frequencyData ? frequencyData[bin] / 255 : 0;
+      visualizerLevels[index] = THREE.MathUtils.damp(visualizerLevels[index], energy, 5.5, delta);
+      const barHeight = .008 + visualizerLevels[index] * .11;
+      visualizerDummy.position.set(-.37 + Math.cos(angle) * 1.17, .078 + barHeight / 2, .04 + Math.sin(angle) * 1.17);
+      visualizerDummy.scale.set(1, barHeight, 1);
+      visualizerDummy.rotation.set(0, 0, 0);
+      visualizerDummy.updateMatrix();
+      visualizer.setMatrixAt(index, visualizerDummy.matrix);
+    }
+    visualizer.instanceMatrix.needsUpdate = true;
+  };
   mount?.addEventListener('pointermove', onPointerMove, { passive: true });
   mount?.addEventListener('pointerleave', onPointerLeave, { passive: true });
   window.addEventListener('aurelia:play-state', onPlayState);
+  window.addEventListener('aurelia:analyzer-ready', onAnalyzerReady);
 
   let previous = performance.now();
   const tick = (now) => {
@@ -271,6 +317,7 @@ export function createVinylStage(canvas) {
     camera.position.x = THREE.MathUtils.damp(camera.position.x, targetX * .12, 1.6, delta);
     camera.position.z = THREE.MathUtils.damp(camera.position.z, 4.55 + targetY * .08, 1.6, delta);
     camera.lookAt(targetX * .035, -.04 + targetY * .025, 0);
+    updateVisualizer(delta);
     renderer.render(scene, camera);
   };
   frame = requestAnimationFrame(tick);
@@ -285,6 +332,7 @@ export function createVinylStage(canvas) {
       mount?.removeEventListener('pointermove', onPointerMove);
       mount?.removeEventListener('pointerleave', onPointerLeave);
       window.removeEventListener('aurelia:play-state', onPlayState);
+      window.removeEventListener('aurelia:analyzer-ready', onAnalyzerReady);
       scene.traverse((object) => {
         object.geometry?.dispose();
         if (Array.isArray(object.material)) object.material.forEach((material) => material.dispose());
@@ -296,5 +344,10 @@ export function createVinylStage(canvas) {
   };
   api.setCenterLabel = setCenterLabel;
   api.getCenterLabelSource = () => centerLabelSource;
+  api.getVisualizerState = () => ({
+    connected: Boolean(audioAnalyser),
+    active: Boolean(playing && audioContext?.state === 'running'),
+    level: visualizerLevels.reduce((sum, level) => sum + level, 0) / visualizerSegments
+  });
   return api;
 }
