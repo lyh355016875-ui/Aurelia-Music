@@ -4,6 +4,14 @@ Aurelia is a quiet, artful listening space inspired by premium audio equipment, 
 
 ## Releases
 
+### V0.4 — Audio playback
+
+- Nine bundled, original 36-second instrumental demo loops (MP3); sample song/artist metadata is illustrative and the files are not original commercial recordings.
+- Play/pause, previous/next, ended-track advance, current/total time, click/drag/keyboard seeking, volume, and mute/restore.
+- Playback state synchronizes the 3D record rotation.
+
+To regenerate the demo audio, run `python3 scripts/generate_demo_audio.py` with NumPy and `ffmpeg` installed.
+
 ### V0.3 — 3D vinyl player
 
 - Real Three.js turntable scene with a grooved vinyl, center label, plinth, tonearm, cartridge, soft lighting, and shadows.
