@@ -1,5 +1,9 @@
-import * as THREE from 'three';
-import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+// Classic-script runtime (no ES modules or bundler required at runtime).
+// vendor/three.js is loaded before this file and exposes the full THREE
+// namespace — core, WebGL renderer, and the RoundedBoxGeometry addon — on
+// window.THREE, so the page runs by double-clicking index.html (file://).
+const THREE = window.THREE;
+const RoundedBoxGeometry = THREE.RoundedBoxGeometry;
 
 function makeGrooveTexture() {
   const canvas = document.createElement('canvas');
@@ -64,7 +68,7 @@ function addCylinderBetween(parent, from, to, radius, material, radialSegments =
   return mesh;
 }
 
-export function createVinylStage(canvas) {
+function createVinylStage(canvas) {
   if (!canvas) return null;
   const mount = canvas.closest('.artwork-stage');
   let renderer;

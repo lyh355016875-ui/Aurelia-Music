@@ -7,7 +7,13 @@
     <meta name="description" content="Aurelia — a quiet place for the music you love." />
     <title>Aurelia — Music, in its own time</title>
     <link rel="stylesheet" href="./styles.css" />
-    <script type="module" src="./app.js"></script>
+    <!-- Classic scripts (deferred, executed in order after the DOM is parsed).
+         Using defer keeps them in <head> while guaranteeing the document body is
+         ready and preserving load order: three -> vinyl-stage -> app. They load
+         over file:// too, so index.html runs by double-clicking it directly. -->
+    <script defer src="./vendor/three.js"></script>
+    <script defer src="./src/vinyl-stage.js"></script>
+    <script defer src="./app.js"></script>
   </head>
   <body>
     <div class="app-shell">

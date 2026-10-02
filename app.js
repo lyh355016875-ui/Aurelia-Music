@@ -1,4 +1,6 @@
-import { createVinylStage } from './src/vinyl-stage.js';
+// Classic-script runtime: createVinylStage is declared as a top-level
+// function in ./src/vinyl-stage.js, loaded before this file, so it is
+// available as a global. No ES module imports are used here.
 
 const tracks = [
   { id: 'better-days', title: 'Better Days', artist: 'NEIKED · Mae Muller', album: 'Better Days', time: '0:36', tone: '#716044', audio: '/audio/better-days.mp3', cover: '/images/covers/better-days.jpg' },
@@ -11,6 +13,19 @@ const tracks = [
   { id: 'sunny-day', title: '晴天', artist: '周杰伦', album: '叶惠美', time: '0:36', tone: '#a17c4d', audio: '/audio/sunny-day.mp3', cover: '/images/covers/sunny-day.jpg' },
   { id: 'beyond-sea', title: '海阔天空', artist: 'Beyond', album: '乐与怒', time: '0:36', tone: '#526573', audio: '/audio/beyond-sea.mp3', cover: '/images/covers/beyond-sea.jpg' }
 ];
+
+// Resolve demo-audio and cover-art paths so the page works both on the Vite
+// dev/build server and when index.html is opened directly via file://
+// (double-click). On the server, public/ is served at the site root, so the
+// original '/audio/...' and '/images/...' paths already resolve; on file://
+// they would resolve to the filesystem root, so we prefix with './public' to
+// stay local. The string literals in the tracks array are left unchanged.
+const assetBase = location.protocol === 'file:' ? './public' : '';
+for (const track of tracks) {
+  track.audio = assetBase + track.audio;
+  track.cover = assetBase + track.cover;
+}
+
 const recommendations = [tracks[1], tracks[2], tracks[4], tracks[5], tracks[0], tracks[7]];
 const list = document.querySelector('#queue-list');
 const search = document.querySelector('#track-search');
@@ -65,6 +80,15 @@ let analyser = null;
 
 function initializeAnalyser() {
   if (analyser) return analyser;
+  // When index.html is opened directly via file:// (double-click), the <audio>
+  // element's media has an opaque null origin. Routing it through a Web Audio
+  // MediaElementSource taints the node and outputs silence, so the analyser is
+  // skipped here and the <audio> plays through its normal output instead. Use
+  // `npm run dev` (HTTP, same-origin media) to enable the live spectrum.
+  if (location.protocol === 'file:') {
+    audioStatus.textContent = '本地直接打开：频谱可视化不可用，音频播放正常。';
+    return null;
+  }
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
   if (!AudioContextClass) {
     audioStatus.textContent = '当前浏览器不支持实时音乐可视化。';
